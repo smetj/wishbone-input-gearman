@@ -64,8 +64,8 @@ setup(
     author='Jelle Smet',
     author_email='development@smetj.net',
 
-    url='https://github.com/smetj/wishbone-input-gearmand',
-    download_url='https://github.com/smetj/wishbone-input-gearmand/tarball/master',
+    url='https://github.com/smetj/wishbone-input-gearman',
+    download_url='https://github.com/smetj/wishbone-input-gearman/tarball/master',
     classifiers=['Development Status :: 5 - Production/Stable',
                  'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
                  'Programming Language :: Python',
@@ -88,7 +88,7 @@ setup(
     zip_safe=False,
     entry_points={
         'wishbone.input': [
-            'gearmand=wishbone_input_gearmand:Gearman',
+            'gearman=wishbone_input_gearman:Gearman',
         ]
     }
 )
