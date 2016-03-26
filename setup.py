@@ -29,6 +29,12 @@ import sys
 PROJECT = 'wishbone_input_gearman'
 VERSION = '0.1.1'
 
+# Required to make pycrypto compile with PyPy
+# https://github.com/dlitz/pycrypto/pull/59
+if "PyPy" in sys.version:
+    print("We are running PyPY, disable gmp to prevent pycrypto build error.")
+    os.environ["with_gmp"] = "no"
+
 install_requires = [
     'wishbone>=2.1.1',
     'gearman==2.0.2',
