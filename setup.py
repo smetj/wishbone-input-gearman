@@ -24,7 +24,7 @@
 
 from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
-import sys
+import sys, os
 
 PROJECT = 'wishbone_input_gearman'
 VERSION = '0.1.1'
@@ -34,6 +34,7 @@ VERSION = '0.1.1'
 if "PyPy" in sys.version:
     print("We are running PyPY, disable gmp to prevent pycrypto build error.")
     os.environ["with_gmp"] = "no"
+
 
 install_requires = [
     'wishbone>=2.1.1',
