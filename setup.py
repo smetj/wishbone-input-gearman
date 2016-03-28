@@ -27,7 +27,7 @@ from setuptools.command.test import test as TestCommand
 import sys, os
 
 PROJECT = 'wishbone_input_gearman'
-VERSION = '0.1.1'
+VERSION = '1.0.0'
 
 # Required to make pycrypto compile with PyPy
 # https://github.com/dlitz/pycrypto/pull/59
@@ -39,7 +39,7 @@ if "PyPy" in sys.version:
 install_requires = [
     'wishbone>=2.1.1',
     'gearman==2.0.2',
-    'pycrypto==2.6.1'
+    'pycrypto>=2.6.1'
 ]
 
 try:
@@ -95,7 +95,7 @@ setup(
     zip_safe=False,
     entry_points={
         'wishbone.input': [
-            'gearman=wishbone_input_gearman:Gearman',
+            'gearman=wishbone_input_gearman:GearmanIn',
         ]
     }
 )
