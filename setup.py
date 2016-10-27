@@ -27,7 +27,7 @@ from setuptools.command.test import test as TestCommand
 import sys, os
 
 PROJECT = 'wishbone_input_gearman'
-VERSION = '1.1.0'
+VERSION = '1.1.1'
 
 # Required to make pycrypto compile with PyPy
 # https://github.com/dlitz/pycrypto/pull/59
@@ -39,7 +39,8 @@ if "PyPy" in sys.version:
 install_requires = [
     'wishbone>=2.1.1',
     'gearman==2.0.2',
-    'pycrypto>=2.6.1'
+    'pycrypto>=2.6.1',
+    'mock==2.0.0'
 ]
 
 try:
