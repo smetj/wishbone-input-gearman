@@ -22,14 +22,33 @@
 #
 #
 
-
+from gevent import socket
+import mock
 from gevent import monkey; monkey.patch_all()
 from wishbone import Actor
 from wishbone.event import Event
 from gevent import sleep
 from gearman import GearmanWorker
+from gearman.connection import GearmanConnection
+from gearman import __version__ as gearman_version
 from Crypto.Cipher import AES
 import base64
+
+def create_client_socket(self):
+    """
+    Patched version of gearman.connection.GearmanConnection._create_client_socket.
+    This patched version returns sockets with TCP keepalive enabled.
+
+    Creates a client side socket and subsequently binds/configures our socket options"""
+
+    try:
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)
+        client_socket.connect((self.gearman_host, self.gearman_port))
+    except socket.error, socket_exception:
+        self.throw_exception(exception=socket_exception)
+
+    self.set_socket(client_socket)
 
 
 class GearmanIn(Actor):
@@ -55,6 +74,10 @@ class GearmanIn(Actor):
         - queue(str)(wishbone)
            |  The queue to consume jobs from.
 
+        - enable_keepalive(bool)(False)
+           |  Attempt to monkey patch the gearmand module to enable socket
+           |  keepalive.
+
 
     Queues:
 
@@ -62,7 +85,7 @@ class GearmanIn(Actor):
 
     '''
 
-    def __init__(self, actor_config, hostlist=["localhost:4730"], secret=None, workers=1, queue="wishbone"):
+    def __init__(self, actor_config, hostlist=["localhost:4730"], secret=None, workers=1, queue="wishbone", enable_keepalive=False):
         Actor.__init__(self, actor_config)
 
         self.pool.createQueue("outbox")
@@ -76,6 +99,18 @@ class GearmanIn(Actor):
             self.decrypt = self.__encryptedJob
 
     def preHook(self):
+
+        if self.kwargs.enable_keepalive:
+            self.logging.info("Requested to monkey patch Gearmand")
+            if gearman_version == "2.0.2":
+                self.logging.info("Detected gearman version 2.0.2, patching sockets with SO_KEEPALIVE enabled.")
+                self.gearmanWorker = self._gearmanWorkerPatched
+            else:
+                self.logging.warning("Did not detect gearman version 2.0.2. Not patching , patching sockets with keepalive enabled.")
+                self.gearmanWorker = self._gearmanWorkerNotPatched
+        else:
+            self.gearmanWorker = self._gearmanWorkerNotPatched
+
         for _ in range(self.kwargs.workers):
             self.sendToBackground(self.gearmanWorker)
 
@@ -92,7 +127,20 @@ class GearmanIn(Actor):
     def __plainTextJob(self, data):
         return data
 
-    def gearmanWorker(self):
+    def _gearmanWorkerPatched(self):
+
+        self.logging.info("Gearmand worker instance started")
+        while self.loop():
+            try:
+                with mock.patch.object(GearmanConnection, '_create_client_socket', create_client_socket):
+                    worker_instance = GearmanWorker(self.kwargs.hostlist)
+                    worker_instance.register_task(self.kwargs.queue, self.consume)
+                    worker_instance.work()
+            except Exception as err:
+                self.logging.warn('Connection to gearmand failed. Reason: %s. Retry in 1 second.' % err)
+                sleep(1)
+
+    def _gearmanWorkerNotPatched(self):
 
         self.logging.info("Gearmand worker instance started")
         while self.loop():
