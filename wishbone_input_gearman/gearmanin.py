@@ -114,6 +114,8 @@ class GearmanIn(Actor):
         for _ in range(self.kwargs.workers):
             self.sendToBackground(self.gearmanWorker)
 
+        self.sendToBackground(self.monitor)
+
     def consume(self, gearman_worker, gearman_job):
 
         decrypted = self.decrypt(gearman_job.data)
@@ -133,9 +135,9 @@ class GearmanIn(Actor):
         while self.loop():
             try:
                 with mock.patch.object(GearmanConnection, '_create_client_socket', create_client_socket):
-                    worker_instance = GearmanWorker(self.kwargs.hostlist)
-                    worker_instance.register_task(self.kwargs.queue, self.consume)
-                    worker_instance.work()
+                    self.worker_instance = GearmanWorker(self.kwargs.hostlist)
+                    self.worker_instance.register_task(self.kwargs.queue, self.consume)
+                    self.worker_instance.work()
             except Exception as err:
                 self.logging.warn('Connection to gearmand failed. Reason: %s. Retry in 1 second.' % err)
                 sleep(1)
@@ -145,9 +147,24 @@ class GearmanIn(Actor):
         self.logging.info("Gearmand worker instance started")
         while self.loop():
             try:
-                worker_instance = GearmanWorker(self.kwargs.hostlist)
-                worker_instance.register_task(self.kwargs.queue, self.consume)
-                worker_instance.work()
+                self.worker_instance = GearmanWorker(self.kwargs.hostlist)
+                self.worker_instance.register_task(self.kwargs.queue, self.consume)
+                self.worker_instance.work()
             except Exception as err:
                 self.logging.warn('Connection to gearmand failed. Reason: %s. Retry in 1 second.' % err)
                 sleep(1)
+
+    def monitor(self):
+
+        self.logging.info("Connection monitor started.")
+        while self.loop():
+            sleep(5)
+            for conn in self.worker_instance.connection_list:
+                if not conn.connected:
+                    self.logging.error("Connection to %s is dead.  Trying to reconnect." % (conn.gearman_host))
+                    try:
+                        conn.connect()
+                    except Exception as err:
+                        self.logging.error("Failed to reconnect to '%s'. Retry in 5 seconds. Reason: '%s'" % (conn.gearman_host, err))
+                else:
+                    self.logging.debug("Connection to '%s' is alive." % (conn.gearman_host))
