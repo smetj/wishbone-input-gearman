@@ -139,7 +139,7 @@ class GearmanIn(Actor):
                     self.worker_instance.register_task(self.kwargs.queue, self.consume)
                     self.worker_instance.work()
             except Exception as err:
-                self.logging.warn('Connection to gearmand failed. Reason: %s. Retry in 1 second.' % err)
+                self.logging.warn("Connection to gearmand failed. Reason: '%s'. Retry in 1 second." % err)
                 sleep(1)
 
     def _gearmanWorkerNotPatched(self):
@@ -151,7 +151,7 @@ class GearmanIn(Actor):
                 self.worker_instance.register_task(self.kwargs.queue, self.consume)
                 self.worker_instance.work()
             except Exception as err:
-                self.logging.warn('Connection to gearmand failed. Reason: %s. Retry in 1 second.' % err)
+                self.logging.warn("Connection to gearmand failed. Reason: '%s'. Retry in 1 second." % err)
                 sleep(1)
 
     def monitor(self):
@@ -161,9 +161,10 @@ class GearmanIn(Actor):
             sleep(5)
             for conn in self.worker_instance.connection_list:
                 if not conn.connected:
-                    self.logging.error("Connection to %s is dead.  Trying to reconnect." % (conn.gearman_host))
+                    self.logging.error("Connection to '%s' is dead.  Trying to reconnect." % (conn.gearman_host))
                     try:
                         conn.connect()
+                        self.logging.info("Connection to '%s' is restored." % (conn.gearman_host))
                     except Exception as err:
                         self.logging.error("Failed to reconnect to '%s'. Retry in 5 seconds. Reason: '%s'" % (conn.gearman_host, err))
                 else:
