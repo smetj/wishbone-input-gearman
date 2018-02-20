@@ -121,7 +121,7 @@ class GearmanIn(Actor):
         decrypted = self.decrypt(gearman_job.data)
         event = Event(decrypted)
         self.submit(event, self.pool.queue.outbox)
-        return decrypted
+        return gearman_job.data
 
     def __encryptedJob(self, data):
         return self.cipher.decrypt(base64.b64decode(data))
@@ -141,6 +141,8 @@ class GearmanIn(Actor):
             except Exception as err:
                 self.logging.warn("Connection to gearmand failed. Reason: '%s'. Retry in 1 second." % err)
                 sleep(1)
+            finally:
+                self.worker_instance.shutdown()
 
     def _gearmanWorkerNotPatched(self):
 
@@ -153,6 +155,8 @@ class GearmanIn(Actor):
             except Exception as err:
                 self.logging.warn("Connection to gearmand failed. Reason: '%s'. Retry in 1 second." % err)
                 sleep(1)
+            finally:
+                self.worker_instance.shutdown()
 
     def monitor(self):
 
