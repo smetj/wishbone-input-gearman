@@ -4,16 +4,17 @@
     .--.--.--|__.-----|  |--|  |--.-----.-----.-----.
     |  |  |  |  |__ --|     |  _  |  _  |     |  -__|
     |________|__|_____|__|__|_____|_____|__|__|_____|
-                                       version 2.1.2
+                                       version 2.3.3
 
     Build composable event pipeline servers with minimal effort.
+
 
 
     ======================
     wishbone.input.gearman
     ======================
 
-    Version: 1.0.0
+    Version: 1.2.1
 
     Consumes events/jobs from  Gearmand.
     ------------------------------------
@@ -38,7 +39,13 @@
             - queue(str)(wishbone)
                |  The queue to consume jobs from.
 
+            - enable_keepalive(bool)(False)
+               |  Attempt to monkey patch the gearmand module to enable socket
+               |  keepalive.
+
 
         Queues:
 
             - outbox:   Outgoing events.
+
+
